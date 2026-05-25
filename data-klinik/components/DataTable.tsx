@@ -78,6 +78,55 @@ function calcBORRanapUmum(row: DataKlinik): string {
   return bor.toFixed(2) + '%';
 }
 
+function calcAVLOS(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  const a = ((row.hp_bpjs ?? 0) + (row.hp_partus_bpjs ?? 0)) / days;
+  const pasienKeluar = (row.ranap_bpjs ?? 0) + (row.partus_bpjs ?? 0);
+  if (pasienKeluar === 0) return '-';
+  const avlos = (a * days) / pasienKeluar;
+  return avlos.toFixed(2);
+}
+
+function calcAVLOSTotal(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  const borTot =
+    ((row.hp_bpjs ?? 0) +
+      (row.hp_partus_bpjs ?? 0) +
+      (row.hp_umum ?? 0) +
+      (row.hp_partus_umum ?? 0)) /
+    days;
+  const pasienKeluar =
+    (row.ranap_bpjs ?? 0) +
+    (row.partus_bpjs ?? 0) +
+    (row.partus_umum ?? 0) +
+    (row.ranap_umum ?? 0);
+  if (pasienKeluar === 0) return '-';
+  const avlosTotal = (borTot * days) / pasienKeluar;
+  return avlosTotal.toFixed(2);
+}
+
+function calcAVLOSBPJS(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  // $brbpjs = hp_bpjs / hari
+  const brbpjs = (row.hp_bpjs ?? 0) / days;
+  const ranap = row.ranap_bpjs ?? 0;
+  if (ranap === 0) return '-';
+  return ((brbpjs * days) / ranap).toFixed(2);
+}
+
+function calcAVLOSUmum(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  // $brumum = hp_umum / hari
+  const brumum = (row.hp_umum ?? 0) / days;
+  const ranap = row.ranap_umum ?? 0;
+  if (ranap === 0) return '-';
+  return ((brumum * days) / ranap).toFixed(2);
+}
+
 export default function DataTable({ data, loading, onEdit, onDelete }: DataTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -86,6 +135,10 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
   const [showBORTotal, setShowBORTotal] = useState(false);
   const [showBORRanapBPJS, setShowBORRanapBPJS] = useState(false);
   const [showBORRanapUmum, setShowBORRanapUmum] = useState(false);
+  const [showAVLOS, setShowAVLOS] = useState(false);
+  const [showAVLOSTotal, setShowAVLOSTotal] = useState(false);
+  const [showAVLOSBPJS, setShowAVLOSBPJS] = useState(false);
+  const [showAVLOSUmum, setShowAVLOSUmum] = useState(false);
 
   const handleDeleteConfirm = async () => {
     if (confirmId === null) return;
@@ -194,6 +247,50 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
           {showBORRanapUmum ? 'Sembunyikan BOR Ranap Umum' : 'Hitung BOR Ranap Umum'}
         </button>
         <button
+          onClick={() => setShowAVLOS((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showAVLOS
+              ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700'
+              : 'bg-white text-teal-700 border-teal-400 hover:bg-teal-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showAVLOS ? 'Sembunyikan AVLOS' : 'Hitung AVLOS'}
+        </button>
+        <button
+          onClick={() => setShowAVLOSTotal((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showAVLOSTotal
+              ? 'bg-cyan-600 text-white border-cyan-600 hover:bg-cyan-700'
+              : 'bg-white text-cyan-700 border-cyan-400 hover:bg-cyan-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showAVLOSTotal ? 'Sembunyikan AVLOS Total' : 'Hitung AVLOS Total'}
+        </button>
+        <button
+          onClick={() => setShowAVLOSBPJS((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showAVLOSBPJS
+              ? 'bg-sky-600 text-white border-sky-600 hover:bg-sky-700'
+              : 'bg-white text-sky-700 border-sky-400 hover:bg-sky-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showAVLOSBPJS ? 'Sembunyikan AVLOS BPJS' : 'Hitung AVLOS BPJS'}
+        </button>
+        <button
+          onClick={() => setShowAVLOSUmum((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showAVLOSUmum
+              ? 'bg-pink-600 text-white border-pink-600 hover:bg-pink-700'
+              : 'bg-white text-pink-700 border-pink-400 hover:bg-pink-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showAVLOSUmum ? 'Sembunyikan AVLOS Umum' : 'Hitung AVLOS Umum'}
+        </button>
+        <button
           onClick={() => setShowUnitCost((v) => !v)}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
             showUnitCost
@@ -254,6 +351,38 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                   </span>
                 </th>
               )}
+              {showAVLOS && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-teal-600 uppercase tracking-wider">
+                  AVLOS
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    (hp_bpjs+hp_partus_bpjs)÷(ranap_bpjs+partus_bpjs)
+                  </span>
+                </th>
+              )}
+              {showAVLOSTotal && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-cyan-600 uppercase tracking-wider">
+                  AVLOS Total
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    (hp_all)÷(ranap_bpjs+partus_bpjs+partus_umum+ranap_umum)
+                  </span>
+                </th>
+              )}
+              {showAVLOSBPJS && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-sky-600 uppercase tracking-wider">
+                  AVLOS BPJS
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    hp_bpjs÷ranap_bpjs
+                  </span>
+                </th>
+              )}
+              {showAVLOSUmum && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-pink-600 uppercase tracking-wider">
+                  AVLOS Umum
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    hp_umum÷ranap_umum
+                  </span>
+                </th>
+              )}
               {showUnitCost && (
                 <th className="px-4 py-3 text-right text-xs font-semibold text-emerald-600 uppercase tracking-wider">
                   Unit Cost
@@ -294,6 +423,26 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                 {showBORRanapUmum && (
                   <td className="px-4 py-3 text-right font-mono text-rose-700 font-medium">
                     {calcBORRanapUmum(row)}
+                  </td>
+                )}
+                {showAVLOS && (
+                  <td className="px-4 py-3 text-right font-mono text-teal-700 font-medium">
+                    {calcAVLOS(row)}
+                  </td>
+                )}
+                {showAVLOSTotal && (
+                  <td className="px-4 py-3 text-right font-mono text-cyan-700 font-medium">
+                    {calcAVLOSTotal(row)}
+                  </td>
+                )}
+                {showAVLOSBPJS && (
+                  <td className="px-4 py-3 text-right font-mono text-sky-700 font-medium">
+                    {calcAVLOSBPJS(row)}
+                  </td>
+                )}
+                {showAVLOSUmum && (
+                  <td className="px-4 py-3 text-right font-mono text-pink-700 font-medium">
+                    {calcAVLOSUmum(row)}
                   </td>
                 )}
                 {showUnitCost && (
