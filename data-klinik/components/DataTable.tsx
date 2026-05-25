@@ -33,10 +33,41 @@ function calcUnitCost(row: DataKlinik): string {
   return result.toLocaleString('id-ID', { maximumFractionDigits: 2 });
 }
 
+function getDaysInMonth(bulan: string): number {
+  if (!bulan) return 30;
+  const [year, month] = bulan.split('-').map(Number);
+  if (!year || !month) return 30;
+  return new Date(year, month, 0).getDate();
+}
+
+function calcBOR(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  const totalHP = (row.hp_bpjs ?? 0) + (row.hp_partus_bpjs ?? 0);
+  const a = totalHP / days;
+  const bor = (a / 20) * 100;
+  return bor.toFixed(2) + '%';
+}
+
+function calcBORTotal(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  const totalHP =
+    (row.hp_bpjs ?? 0) +
+    (row.hp_partus_bpjs ?? 0) +
+    (row.hp_umum ?? 0) +
+    (row.hp_partus_umum ?? 0);
+  const a = totalHP / days;
+  const bor = (a / 20) * 100;
+  return bor.toFixed(2) + '%';
+}
+
 export default function DataTable({ data, loading, onEdit, onDelete }: DataTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showUnitCost, setShowUnitCost] = useState(false);
+  const [showBOR, setShowBOR] = useState(false);
+  const [showBORTotal, setShowBORTotal] = useState(false);
 
   const handleDeleteConfirm = async () => {
     if (confirmId === null) return;
@@ -98,8 +129,30 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
         </div>
       )}
 
-      {/* Unit Cost Toggle */}
-      <div className="px-6 pb-2 flex justify-end">
+      {/* Calculation Toggles */}
+      <div className="px-6 pb-2 flex justify-end gap-2">
+        <button
+          onClick={() => setShowBOR((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showBOR
+              ? 'bg-violet-600 text-white border-violet-600 hover:bg-violet-700'
+              : 'bg-white text-violet-700 border-violet-400 hover:bg-violet-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showBOR ? 'Sembunyikan BOR' : 'Hitung BOR'}
+        </button>
+        <button
+          onClick={() => setShowBORTotal((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showBORTotal
+              ? 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700'
+              : 'bg-white text-orange-700 border-orange-400 hover:bg-orange-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showBORTotal ? 'Sembunyikan BOR Total' : 'Hitung BOR Total'}
+        </button>
         <button
           onClick={() => setShowUnitCost((v) => !v)}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
@@ -129,6 +182,22 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                   {col.label}
                 </th>
               ))}
+              {showBOR && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-violet-600 uppercase tracking-wider">
+                  BOR
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    (hp_bpjs+hp_partus_bpjs)÷hari÷20×100%
+                  </span>
+                </th>
+              )}
+              {showBORTotal && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-orange-600 uppercase tracking-wider">
+                  BOR Total
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    (hp_bpjs+hp_partus_bpjs+hp_umum+hp_partus_umum)÷hari÷20×100%
+                  </span>
+                </th>
+              )}
               {showUnitCost && (
                 <th className="px-4 py-3 text-right text-xs font-semibold text-emerald-600 uppercase tracking-wider">
                   Unit Cost
@@ -151,6 +220,16 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                     {formatValue(col.key, row[col.key as keyof DataKlinik])}
                   </td>
                 ))}
+                {showBOR && (
+                  <td className="px-4 py-3 text-right font-mono text-violet-700 font-medium">
+                    {calcBOR(row)}
+                  </td>
+                )}
+                {showBORTotal && (
+                  <td className="px-4 py-3 text-right font-mono text-orange-700 font-medium">
+                    {calcBORTotal(row)}
+                  </td>
+                )}
                 {showUnitCost && (
                   <td className="px-4 py-3 text-right font-mono text-emerald-700 font-medium">
                     {calcUnitCost(row)}
