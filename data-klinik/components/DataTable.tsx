@@ -62,12 +62,30 @@ function calcBORTotal(row: DataKlinik): string {
   return bor.toFixed(2) + '%';
 }
 
+function calcBORRanapBPJS(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  const a = (row.hp_bpjs ?? 0) / days;
+  const bor = (a / 20) * 100;
+  return bor.toFixed(2) + '%';
+}
+
+function calcBORRanapUmum(row: DataKlinik): string {
+  const days = getDaysInMonth(row.bulan);
+  if (days === 0) return '-';
+  const a = (row.hp_umum ?? 0) / days;
+  const bor = (a / 20) * 100;
+  return bor.toFixed(2) + '%';
+}
+
 export default function DataTable({ data, loading, onEdit, onDelete }: DataTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showUnitCost, setShowUnitCost] = useState(false);
   const [showBOR, setShowBOR] = useState(false);
   const [showBORTotal, setShowBORTotal] = useState(false);
+  const [showBORRanapBPJS, setShowBORRanapBPJS] = useState(false);
+  const [showBORRanapUmum, setShowBORRanapUmum] = useState(false);
 
   const handleDeleteConfirm = async () => {
     if (confirmId === null) return;
@@ -128,7 +146,7 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
           </div>
         </div>
       )}
-
+ 
       {/* Calculation Toggles */}
       <div className="px-6 pb-2 flex justify-end gap-2">
         <button
@@ -152,6 +170,28 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
         >
           <Calculator size={15} />
           {showBORTotal ? 'Sembunyikan BOR Total' : 'Hitung BOR Total'}
+        </button>
+        <button
+          onClick={() => setShowBORRanapBPJS((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showBORRanapBPJS
+              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+              : 'bg-white text-blue-700 border-blue-400 hover:bg-blue-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showBORRanapBPJS ? 'Sembunyikan BOR Ranap BPJS' : 'Hitung BOR Ranap BPJS'}
+        </button>
+        <button
+          onClick={() => setShowBORRanapUmum((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showBORRanapUmum
+              ? 'bg-rose-600 text-white border-rose-600 hover:bg-rose-700'
+              : 'bg-white text-rose-700 border-rose-400 hover:bg-rose-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showBORRanapUmum ? 'Sembunyikan BOR Ranap Umum' : 'Hitung BOR Ranap Umum'}
         </button>
         <button
           onClick={() => setShowUnitCost((v) => !v)}
@@ -198,6 +238,22 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                   </span>
                 </th>
               )}
+              {showBORRanapBPJS && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                  BOR Ranap BPJS
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    hp_bpjs÷hari÷20×100%
+                  </span>
+                </th>
+              )}
+              {showBORRanapUmum && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-rose-600 uppercase tracking-wider">
+                  BOR Ranap Umum
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    hp_umum÷hari÷20×100%
+                  </span>
+                </th>
+              )}
               {showUnitCost && (
                 <th className="px-4 py-3 text-right text-xs font-semibold text-emerald-600 uppercase tracking-wider">
                   Unit Cost
@@ -228,6 +284,16 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                 {showBORTotal && (
                   <td className="px-4 py-3 text-right font-mono text-orange-700 font-medium">
                     {calcBORTotal(row)}
+                  </td>
+                )}
+                {showBORRanapBPJS && (
+                  <td className="px-4 py-3 text-right font-mono text-blue-700 font-medium">
+                    {calcBORRanapBPJS(row)}
+                  </td>
+                )}
+                {showBORRanapUmum && (
+                  <td className="px-4 py-3 text-right font-mono text-rose-700 font-medium">
+                    {calcBORRanapUmum(row)}
                   </td>
                 )}
                 {showUnitCost && (
