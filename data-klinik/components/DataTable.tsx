@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, AlertTriangle, Calculator } from 'lucide-react';
 import type { DataKlinik } from '@/lib/types';
 import { TABLE_COLUMNS } from '@/lib/types';
 
@@ -26,9 +26,17 @@ function formatValue(key: string, value: unknown): string {
   return String(value ?? '-');
 }
 
+function calcUnitCost(row: DataKlinik): string {
+  const kunjungan = (row.kunj_sakit ?? 0) + (row.kunj_sehat ?? 0) + (row.kunjungan_rajal ?? 0);
+  if (kunjungan === 0) return '-';
+  const result = (row.jml_peserta * 10000) / kunjungan;
+  return result.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+}
+
 export default function DataTable({ data, loading, onEdit, onDelete }: DataTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showUnitCost, setShowUnitCost] = useState(false);
 
   const handleDeleteConfirm = async () => {
     if (confirmId === null) return;
@@ -90,6 +98,21 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
         </div>
       )}
 
+      {/* Unit Cost Toggle */}
+      <div className="px-6 pb-2 flex justify-end">
+        <button
+          onClick={() => setShowUnitCost((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition ${
+            showUnitCost
+              ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+              : 'bg-white text-emerald-700 border-emerald-400 hover:bg-emerald-50'
+          }`}
+        >
+          <Calculator size={15} />
+          {showUnitCost ? 'Sembunyikan Unit Cost' : 'Hitung Unit Cost'}
+        </button>
+      </div>
+
       {/* Scrollable Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm whitespace-nowrap">
@@ -106,6 +129,14 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                   {col.label}
                 </th>
               ))}
+              {showUnitCost && (
+                <th className="px-4 py-3 text-right text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                  Unit Cost
+                  <span className="block normal-case font-normal text-gray-400 text-[10px]">
+                    peserta×10.000÷kunjungan
+                  </span>
+                </th>
+              )}
               <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Aksi
               </th>
@@ -120,6 +151,11 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                     {formatValue(col.key, row[col.key as keyof DataKlinik])}
                   </td>
                 ))}
+                {showUnitCost && (
+                  <td className="px-4 py-3 text-right font-mono text-emerald-700 font-medium">
+                    {calcUnitCost(row)}
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-1">
                     <button
