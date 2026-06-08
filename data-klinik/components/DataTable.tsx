@@ -27,22 +27,11 @@ function formatValue(key: string, value: unknown): string {
 }
 
 function calcUnitCost(row: DataKlinik): string {
-  const kunjungan =
-    (row.kunj_sakit ?? 0) +
-    (row.kunj_sehat ?? 0) +
-    (row.kunjungan_rajal ?? 0);
-
-  console.log('kunj_sakit:', row.kunj_sakit);
-  console.log('kunj_sehat:', row.kunj_sehat);
-  console.log('kunjungan_rajal:', row.kunjungan_rajal);
-  console.log('Total kunjungan:', kunjungan);
-  console.log('Jumlah peserta:', row.jml_peserta);
+  const kunjungan = row.kunjungan_rajal ?? 0;
 
   if (kunjungan === 0) return '-';
 
   const result = (row.jml_peserta * 10000) / kunjungan;
-
-  console.log('Result Unit Cost:', result);
 
   return result.toLocaleString('id-ID', {
     maximumFractionDigits: 2,
