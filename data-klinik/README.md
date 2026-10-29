@@ -1,6 +1,6 @@
 # Data Klinik
 
-Aplikasi web untuk input dan manajemen **data klinik bulanan**.
+Aplikasi web untuk input dan manajemen **data klinik mingguan (Senin–Minggu, 7 hari)**.
 
 ## Stack
 
@@ -14,7 +14,8 @@ Aplikasi web untuk input dan manajemen **data klinik bulanan**.
 
 ## Fitur
 
-- Input data klinik per bulan
+- Input data klinik per minggu, berdasarkan tanggal mulai hari Senin
+- BOR dibagi 7 hari dan 20 tempat tidur; AVLOS dihitung dari total hari perawatan per pasien keluar
 - Edit & hapus data
 - Tabel data dengan format angka lokal (id-ID)
 - Konfirmasi sebelum menghapus
@@ -36,10 +37,12 @@ npm install
 ### 2. Setup Supabase
 
 1. Buat project baru di [supabase.com](https://supabase.com) (free tier cukup)
-2. Buka **SQL Editor** dan jalankan isi file:
+2. Buka **SQL Editor** dan jalankan isi kedua file secara berurutan:
    ```
    supabase/migrations/001_create_data_klinik.sql
+   supabase/migrations/002_add_weekly_period.sql
    ```
+   Jika tabel sudah ada, jalankan hanya migrasi `002_add_weekly_period.sql`. Data bulanan lama tetap tersimpan, tetapi tidak tampil di daftar mingguan karena tidak bisa dipecah menjadi data 7 hari secara akurat.
 3. Salin kredensial dari **Settings → API**:
    - Project URL
    - `anon` public key
@@ -85,7 +88,8 @@ Tabel: `data_klinik`
 | Kolom            | Tipe            | Keterangan               |
 |------------------|-----------------|--------------------------|
 | `id`             | BIGSERIAL (PK)  | Auto-increment           |
-| `bulan`          | TEXT            | Format: `YYYY-MM`        |
+| `bulan`          | TEXT            | Data bulanan lama, format `YYYY-MM`; boleh kosong untuk data baru |
+| `tanggal_mulai`  | DATE            | Hari Senin awal periode 7 hari; unik untuk setiap minggu |
 | `jml_peserta`    | INTEGER         | Jumlah peserta           |
 | `rujukan`        | INTEGER         | Rujukan                  |
 | `kunj_sakit`     | INTEGER         | Kunjungan sakit          |
@@ -120,7 +124,8 @@ data-klinik/
 │   └── types.ts            # TypeScript types & column config
 ├── supabase/
 │   └── migrations/
-│       └── 001_create_data_klinik.sql
+│       ├── 001_create_data_klinik.sql
+│       └── 002_add_weekly_period.sql
 ├── .env.local.example
 ├── next.config.js
 ├── tailwind.config.ts

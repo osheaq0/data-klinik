@@ -1,6 +1,7 @@
 export interface DataKlinik {
   id?: number;
-  bulan: string; // format: YYYY-MM
+  bulan?: string | null; // data lama, format YYYY-MM
+  tanggal_mulai: string; // Senin, format YYYY-MM-DD
   jml_peserta: number;
   rujukan: number;
   kunj_sakit: number;
@@ -18,7 +19,7 @@ export interface DataKlinik {
   updated_at?: string;
 }
 
-export type DataKlinikFormData = Omit<DataKlinik, 'id' | 'created_at' | 'updated_at'>;
+export type DataKlinikFormData = Omit<DataKlinik, 'id' | 'created_at' | 'updated_at' | 'bulan'>;
 
 export interface NumericField {
   key: keyof DataKlinikFormData;
@@ -43,7 +44,7 @@ export const NUMERIC_FIELDS: NumericField[] = [
 ];
 
 export const TABLE_COLUMNS = [
-  { key: 'bulan',           label: 'Bulan' },
+  { key: 'tanggal_mulai',   label: 'Periode 7 Hari' },
   { key: 'jml_peserta',    label: 'Jml. Peserta' },
   { key: 'rujukan',        label: 'Rujukan' },
   { key: 'kunj_sakit',     label: 'Kunj. Sakit' },

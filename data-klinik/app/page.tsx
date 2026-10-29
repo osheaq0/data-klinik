@@ -26,12 +26,13 @@ export default function HomePage() {
     const { data: records, error } = await supabase
       .from('data_klinik')
       .select('*')
-      .order('bulan', { ascending: false });
+      .not('tanggal_mulai', 'is', null)
+      .order('tanggal_mulai', { ascending: false });
 
     if (error) {
       showToast('error', 'Gagal memuat data: ' + error.message);
     } else {
-      setData(records ?? []);
+      setData((records ?? []) as DataKlinik[]);
     }
     setLoading(false);
   }, []);
@@ -89,7 +90,7 @@ export default function HomePage() {
       <header className="bg-blue-600 text-white shadow-md">
         <div className="max-w-screen-xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold tracking-tight">Data Klinik</h1>
-          <p className="text-blue-200 text-sm mt-0.5">Sistem Input Data Klinik Bulanan</p>
+          <p className="text-blue-200 text-sm mt-0.5">Sistem Input Data Klinik Mingguan (7 Hari)</p>
         </div>
       </header>
 

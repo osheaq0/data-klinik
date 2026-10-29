@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import type { DataKlinik, DataKlinikFormData } from '@/lib/types';
 import { NUMERIC_FIELDS } from '@/lib/types';
+import { formatWeekRange, isMonday } from '@/lib/week';
 
 const EMPTY_FORM: DataKlinikFormData = {
-  bulan: '',
+  tanggal_mulai: '',
   jml_peserta: 0,
   rujukan: 0,
   kunj_sakit: 0,
@@ -31,7 +32,7 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
   const [form, setForm] = useState<DataKlinikFormData>(() => {
     if (!initialData) return EMPTY_FORM;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, created_at, updated_at, ...rest } = initialData;
+    const { id, created_at, updated_at, bulan, ...rest } = initialData;
     return rest;
   });
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +42,7 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isMonday(form.tanggal_mulai)) return;
     setSubmitting(true);
     const ok = await onSubmit(form);
     setSubmitting(false);
@@ -49,18 +51,25 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Bulan */}
+      {/* Periode mingguan */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Bulan <span className="text-red-500">*</span>
+          Tanggal mulai minggu (Senin) <span className="text-red-500">*</span>
         </label>
         <input
-          type="month"
-          value={form.bulan}
-          onChange={(e) => set('bulan', e.target.value)}
+          type="date"
+          value={form.tanggal_mulai}
+          onChange={(e) => set('tanggal_mulai', e.target.value)}
           required
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-48"
         />
+        {form.tanggal_mulai && (
+          <p className={`mt-1 text-xs ${isMonday(form.tanggal_mulai) ? 'text-gray-500' : 'text-red-600'}`}>
+            {isMonday(form.tanggal_mulai)
+              ? `Periode: ${formatWeekRange(form.tanggal_mulai)}`
+              : 'Pilih hari Senin agar periode berakhir pada hari Minggu.'}
+          </p>
+        )}
       </div>
 
       {/* Numeric fields grid */}
@@ -86,7 +95,7 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
       <div className="flex gap-3 pt-1">
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !isMonday(form.tanggal_mulai)}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {submitting ? 'Menyimpan…' : initialData ? 'Perbarui' : 'Simpan'}

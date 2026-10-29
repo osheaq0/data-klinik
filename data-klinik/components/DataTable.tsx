@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, AlertTriangle, Calculator } from 'lucide-react';
 import type { DataKlinik } from '@/lib/types';
 import { TABLE_COLUMNS } from '@/lib/types';
+import { formatWeekRange } from '@/lib/week';
 
 interface DataTableProps {
   data: DataKlinik[];
@@ -12,16 +13,8 @@ interface DataTableProps {
   onDelete: (id: number) => Promise<boolean>;
 }
 
-function formatBulan(value: string): string {
-  if (!value) return '-';
-  const [year, month] = value.split('-');
-  if (!year || !month) return value;
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-}
-
 function formatValue(key: string, value: unknown): string {
-  if (key === 'bulan') return formatBulan(value as string);
+  if (key === 'tanggal_mulai') return formatWeekRange(value as string);
   if (typeof value === 'number') return value.toLocaleString('id-ID');
   return String(value ?? '-');
 }
@@ -38,16 +31,8 @@ function calcUnitCost(row: DataKlinik): string {
   });
 }
 
-function getDaysInMonth(bulan: string): number {
-  if (!bulan) return 30;
-  const [year, month] = bulan.split('-').map(Number);
-  if (!year || !month) return 30;
-  return new Date(year, month, 0).getDate();
-}
-
 function calcBOR(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
+  const days = 7;
   const totalHP = (row.hp_bpjs ?? 0) + (row.hp_partus_bpjs ?? 0);
   const a = totalHP / days;
   const bor = (a / 20) * 100;
@@ -55,8 +40,7 @@ function calcBOR(row: DataKlinik): string {
 }
 
 function calcBORTotal(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
+  const days = 7;
   const totalHP =
     (row.hp_bpjs ?? 0) +
     (row.hp_partus_bpjs ?? 0) +
@@ -68,68 +52,52 @@ function calcBORTotal(row: DataKlinik): string {
 }
 
 function calcBORRanapBPJS(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
+  const days = 7;
   const a = (row.hp_bpjs ?? 0) / days;
   const bor = (a / 20) * 100;
   return bor.toFixed(2) + '%';
 }
 
 function calcBORRanapUmum(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
+  const days = 7;
   const a = (row.hp_umum ?? 0) / days;
   const bor = (a / 20) * 100;
   return bor.toFixed(2) + '%';
 }
 
 function calcAVLOS(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
-  const a = ((row.hp_bpjs ?? 0) + (row.hp_partus_bpjs ?? 0)) / days;
   const pasienKeluar = (row.ranap_bpjs ?? 0) + (row.partus_bpjs ?? 0);
   if (pasienKeluar === 0) return '-';
-  const avlos = (a * days) / pasienKeluar;
+  const avlos = ((row.hp_bpjs ?? 0) + (row.hp_partus_bpjs ?? 0)) / pasienKeluar;
   return avlos.toFixed(2);
 }
 
 function calcAVLOSTotal(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
-  const borTot =
-    ((row.hp_bpjs ?? 0) +
-      (row.hp_partus_bpjs ?? 0) +
-      (row.hp_umum ?? 0) +
-      (row.hp_partus_umum ?? 0)) /
-    days;
+  const totalHP =
+    (row.hp_bpjs ?? 0) +
+    (row.hp_partus_bpjs ?? 0) +
+    (row.hp_umum ?? 0) +
+    (row.hp_partus_umum ?? 0);
   const pasienKeluar =
     (row.ranap_bpjs ?? 0) +
     (row.partus_bpjs ?? 0) +
     (row.partus_umum ?? 0) +
     (row.ranap_umum ?? 0);
   if (pasienKeluar === 0) return '-';
-  const avlosTotal = (borTot * days) / pasienKeluar;
+  const avlosTotal = totalHP / pasienKeluar;
   return avlosTotal.toFixed(2);
 }
 
 function calcAVLOSBPJS(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
-  // $brbpjs = hp_bpjs / hari
-  const brbpjs = (row.hp_bpjs ?? 0) / days;
   const ranap = row.ranap_bpjs ?? 0;
   if (ranap === 0) return '-';
-  return ((brbpjs * days) / ranap).toFixed(2);
+  return ((row.hp_bpjs ?? 0) / ranap).toFixed(2);
 }
 
 function calcAVLOSUmum(row: DataKlinik): string {
-  const days = getDaysInMonth(row.bulan);
-  if (days === 0) return '-';
-  // $brumum = hp_umum / hari
-  const brumum = (row.hp_umum ?? 0) / days;
   const ranap = row.ranap_umum ?? 0;
   if (ranap === 0) return '-';
-  return ((brumum * days) / ranap).toFixed(2);
+  return ((row.hp_umum ?? 0) / ranap).toFixed(2);
 }
 
 export default function DataTable({ data, loading, onEdit, onDelete }: DataTableProps) {
@@ -328,7 +296,7 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                 <th className="px-4 py-3 text-right text-xs font-semibold text-violet-600 uppercase tracking-wider">
                   BOR
                   <span className="block normal-case font-normal text-gray-400 text-[10px]">
-                    (hp_bpjs+hp_partus_bpjs)÷hari÷20×100%
+                    (hp_bpjs+hp_partus_bpjs)÷7÷20×100%
                   </span>
                 </th>
               )}
@@ -336,7 +304,7 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                 <th className="px-4 py-3 text-right text-xs font-semibold text-orange-600 uppercase tracking-wider">
                   BOR Total
                   <span className="block normal-case font-normal text-gray-400 text-[10px]">
-                    (hp_bpjs+hp_partus_bpjs+hp_umum+hp_partus_umum)÷hari÷20×100%
+                    (hp_bpjs+hp_partus_bpjs+hp_umum+hp_partus_umum)÷7÷20×100%
                   </span>
                 </th>
               )}
@@ -344,7 +312,7 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                 <th className="px-4 py-3 text-right text-xs font-semibold text-blue-600 uppercase tracking-wider">
                   BOR Ranap BPJS
                   <span className="block normal-case font-normal text-gray-400 text-[10px]">
-                    hp_bpjs÷hari÷20×100%
+                    hp_bpjs÷7÷20×100%
                   </span>
                 </th>
               )}
@@ -352,7 +320,7 @@ export default function DataTable({ data, loading, onEdit, onDelete }: DataTable
                 <th className="px-4 py-3 text-right text-xs font-semibold text-rose-600 uppercase tracking-wider">
                   BOR Ranap Umum
                   <span className="block normal-case font-normal text-gray-400 text-[10px]">
-                    hp_umum÷hari÷20×100%
+                    hp_umum÷7÷20×100%
                   </span>
                 </th>
               )}

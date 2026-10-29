@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Data Klinik',
-  description: 'Sistem Input Data Klinik Bulanan',
+  description: 'Sistem Input Data Klinik Mingguan',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
