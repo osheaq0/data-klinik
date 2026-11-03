@@ -1,6 +1,6 @@
 # Data Klinik
 
-Aplikasi web untuk input dan manajemen **data klinik mingguan (Senin–Minggu, 7 hari)**.
+Aplikasi web untuk input dan manajemen **data klinik bulanan** dengan beberapa entri pada tanggal berbeda dalam bulan yang sama.
 
 ## Stack
 
@@ -14,8 +14,9 @@ Aplikasi web untuk input dan manajemen **data klinik mingguan (Senin–Minggu, 7
 
 ## Fitur
 
-- Input data klinik per minggu, berdasarkan tanggal mulai hari Senin
-- BOR dibagi 7 hari dan 20 tempat tidur; AVLOS dihitung dari total hari perawatan per pasien keluar
+- Input data klinik berdasarkan bulan dan tanggal dalam bulan tersebut; beberapa entri per bulan diperbolehkan
+- BOR dibagi jumlah hari pada bulan yang dipilih dan 20 tempat tidur; AVLOS dihitung dari total hari perawatan per pasien keluar
+- Data bulanan lama tetap terlihat tanpa tanggal; data mingguan dari versi sebelumnya tampil sebagai arsip
 - Edit & hapus data
 - Tabel data dengan format angka lokal (id-ID)
 - Konfirmasi sebelum menghapus
@@ -37,12 +38,13 @@ npm install
 ### 2. Setup Supabase
 
 1. Buat project baru di [supabase.com](https://supabase.com) (free tier cukup)
-2. Buka **SQL Editor** dan jalankan isi kedua file secara berurutan:
+2. Buka **SQL Editor** dan jalankan migrasi secara berurutan pada database baru:
    ```
    supabase/migrations/001_create_data_klinik.sql
    supabase/migrations/002_add_weekly_period.sql
+   supabase/migrations/003_add_monthly_entry_date.sql
    ```
-   Jika tabel sudah ada, jalankan hanya migrasi `002_add_weekly_period.sql`. Data bulanan lama tetap tersimpan, tetapi tidak tampil di daftar mingguan karena tidak bisa dipecah menjadi data 7 hari secara akurat.
+   Jika database sudah memakai versi mingguan, jalankan hanya `003_add_monthly_entry_date.sql`. Migrasi ini tidak menghapus data lama.
 3. Salin kredensial dari **Settings → API**:
    - Project URL
    - `anon` public key
@@ -88,8 +90,9 @@ Tabel: `data_klinik`
 | Kolom            | Tipe            | Keterangan               |
 |------------------|-----------------|--------------------------|
 | `id`             | BIGSERIAL (PK)  | Auto-increment           |
-| `bulan`          | TEXT            | Data bulanan lama, format `YYYY-MM`; boleh kosong untuk data baru |
-| `tanggal_mulai`  | DATE            | Hari Senin awal periode 7 hari; unik untuk setiap minggu |
+| `bulan`          | TEXT            | Bulan perhitungan, format `YYYY-MM`; kosong hanya pada arsip mingguan |
+| `tanggal_catat`  | DATE            | Tanggal input dalam bulan yang dipilih; kosong pada data lama |
+| `tanggal_mulai`  | DATE            | Arsip mingguan dari versi sebelumnya |
 | `jml_peserta`    | INTEGER         | Jumlah peserta           |
 | `rujukan`        | INTEGER         | Rujukan                  |
 | `kunj_sakit`     | INTEGER         | Kunjungan sakit          |
@@ -125,7 +128,8 @@ data-klinik/
 ├── supabase/
 │   └── migrations/
 │       ├── 001_create_data_klinik.sql
-│       └── 002_add_weekly_period.sql
+│       ├── 002_add_weekly_period.sql
+│       └── 003_add_monthly_entry_date.sql
 ├── .env.local.example
 ├── next.config.js
 ├── tailwind.config.ts

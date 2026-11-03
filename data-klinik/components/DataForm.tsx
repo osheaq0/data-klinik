@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import type { DataKlinik, DataKlinikFormData } from '@/lib/types';
 import { NUMERIC_FIELDS } from '@/lib/types';
-import { formatWeekRange, isMonday } from '@/lib/week';
+import { daysInMonth, isDateInMonth } from '@/lib/period';
 
 const EMPTY_FORM: DataKlinikFormData = {
-  tanggal_mulai: '',
+  bulan: '',
+  tanggal_catat: '',
   jml_peserta: 0,
   rujukan: 0,
   kunj_sakit: 0,
@@ -32,17 +33,19 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
   const [form, setForm] = useState<DataKlinikFormData>(() => {
     if (!initialData) return EMPTY_FORM;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, created_at, updated_at, bulan, ...rest } = initialData;
-    return rest;
+    const { id, created_at, updated_at, tanggal_mulai, ...rest } = initialData;
+    return { ...rest, bulan: rest.bulan ?? '', tanggal_catat: rest.tanggal_catat ?? '' };
   });
   const [submitting, setSubmitting] = useState(false);
+  const undatedLegacyRecord = !!initialData && !initialData.tanggal_catat && !form.tanggal_catat && !!form.bulan;
+  const validPeriod = isDateInMonth(form.tanggal_catat, form.bulan) || undatedLegacyRecord;
 
   const set = (key: keyof DataKlinikFormData, value: string | number) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isMonday(form.tanggal_mulai)) return;
+    if (!validPeriod) return;
     setSubmitting(true);
     const ok = await onSubmit(form);
     setSubmitting(false);
@@ -51,25 +54,39 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Periode mingguan */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Tanggal mulai minggu (Senin) <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="date"
-          value={form.tanggal_mulai}
-          onChange={(e) => set('tanggal_mulai', e.target.value)}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-48"
-        />
-        {form.tanggal_mulai && (
-          <p className={`mt-1 text-xs ${isMonday(form.tanggal_mulai) ? 'text-gray-500' : 'text-red-600'}`}>
-            {isMonday(form.tanggal_mulai)
-              ? `Periode: ${formatWeekRange(form.tanggal_mulai)}`
-              : 'Pilih hari Senin agar periode berakhir pada hari Minggu.'}
-          </p>
-        )}
+      <div className="flex flex-wrap gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Bulan <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="month"
+            value={form.bulan}
+            onChange={(e) => set('bulan', e.target.value)}
+            required
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-48"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tanggal Input <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            value={form.tanggal_catat}
+            onChange={(e) => set('tanggal_catat', e.target.value)}
+            min={form.bulan ? `${form.bulan}-01` : undefined}
+            max={form.bulan ? `${form.bulan}-${String(daysInMonth(form.bulan)).padStart(2, '0')}` : undefined}
+            required={!undatedLegacyRecord}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline w-48"
+          />
+          {undatedLegacyRecord && (
+            <p className="mt-1 text-xs text-gray-500">Data lama boleh tanpa tanggal; isi jika diketahui.</p>
+          )}
+          {form.tanggal_catat && !isDateInMonth(form.tanggal_catat, form.bulan) && (
+            <p className="mt-1 text-xs text-red-600">Tanggal harus berada dalam bulan yang dipilih.</p>
+          )}
+        </div>
       </div>
 
       {/* Numeric fields grid */}
@@ -95,7 +112,7 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
       <div className="flex gap-3 pt-1">
         <button
           type="submit"
-          disabled={submitting || !isMonday(form.tanggal_mulai)}
+          disabled={submitting || !validPeriod}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {submitting ? 'Menyimpan…' : initialData ? 'Perbarui' : 'Simpan'}

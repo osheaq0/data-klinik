@@ -25,14 +25,17 @@ export default function HomePage() {
     setLoading(true);
     const { data: records, error } = await supabase
       .from('data_klinik')
-      .select('*')
-      .not('tanggal_mulai', 'is', null)
-      .order('tanggal_mulai', { ascending: false });
+      .select('*');
 
     if (error) {
       showToast('error', 'Gagal memuat data: ' + error.message);
     } else {
-      setData((records ?? []) as DataKlinik[]);
+      const sorted = ((records ?? []) as DataKlinik[]).sort((a, b) => {
+        const dateA = a.tanggal_catat ?? a.tanggal_mulai ?? `${a.bulan ?? ''}-01`;
+        const dateB = b.tanggal_catat ?? b.tanggal_mulai ?? `${b.bulan ?? ''}-01`;
+        return dateB.localeCompare(dateA) || (b.id ?? 0) - (a.id ?? 0);
+      });
+      setData(sorted);
     }
     setLoading(false);
   }, []);
@@ -90,7 +93,7 @@ export default function HomePage() {
       <header className="bg-blue-600 text-white shadow-md">
         <div className="max-w-screen-xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold tracking-tight">Data Klinik</h1>
-          <p className="text-blue-200 text-sm mt-0.5">Sistem Input Data Klinik Mingguan (7 Hari)</p>
+          <p className="text-blue-200 text-sm mt-0.5">Sistem Input Data Klinik Bulanan</p>
         </div>
       </header>
 
