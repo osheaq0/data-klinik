@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "seed:users": "node scripts/seed-users.mjs",
     "start": "next start",
     "lint": "next lint"
   },

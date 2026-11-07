@@ -1,5 +1,6 @@
 export interface DataKlinik {
   id?: number;
+  owner_id: string;
   bulan: string | null; // format YYYY-MM; null pada arsip mingguan
   tanggal_catat: string | null; // tanggal input dalam bulan
   tanggal_mulai: string | null; // arsip mingguan dari versi sebelumnya
@@ -20,7 +21,7 @@ export interface DataKlinik {
   updated_at?: string;
 }
 
-export type DataKlinikFormData = Omit<DataKlinik, 'id' | 'created_at' | 'updated_at' | 'tanggal_mulai' | 'bulan' | 'tanggal_catat'> & {
+export type DataKlinikFormData = Omit<DataKlinik, 'id' | 'owner_id' | 'created_at' | 'updated_at' | 'tanggal_mulai' | 'bulan' | 'tanggal_catat'> & {
   bulan: string;
   tanggal_catat: string;
 };

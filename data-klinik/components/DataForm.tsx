@@ -33,7 +33,7 @@ export default function DataForm({ initialData, onSubmit, onCancel }: DataFormPr
   const [form, setForm] = useState<DataKlinikFormData>(() => {
     if (!initialData) return EMPTY_FORM;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, created_at, updated_at, tanggal_mulai, ...rest } = initialData;
+    const { id, owner_id, created_at, updated_at, tanggal_mulai, ...rest } = initialData;
     return { ...rest, bulan: rest.bulan ?? '', tanggal_catat: rest.tanggal_catat ?? '' };
   });
   const [submitting, setSubmitting] = useState(false);
